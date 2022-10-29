@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
-import CryptoJS from "crypto-js";
 
 import { EDIT_NOTE_URL, GET_NOTE_URL } from "../constants/api";
 import authConfig from "../util/authConfig";
+import { decrypt, encrypt } from "../util/crypto";
 
 export default function View() {
   const navigate = useNavigate();
@@ -27,12 +27,14 @@ export default function View() {
       axios
         .get(GET_NOTE_URL + id, authConfig(user?.token))
         .then(({ data }) => {
-          setIsLoading(false);
           setData(data);
+          setContent(decrypt(data?.content || "", password));
         })
         .catch((e) => {
-          setIsLoading(false);
           setIsError(true);
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
     }
   }, [user, navigate, id]);
@@ -49,15 +51,7 @@ export default function View() {
         onChange={(e) => {
           try {
             setPassword(e.target.value);
-
-            let content = CryptoJS.AES.decrypt(
-              data?.content || "",
-              e.target.value
-            )
-              .toString(CryptoJS.enc.Utf8)
-              .slice(1, -1);
-
-            setContent(content);
+            setContent(decrypt(data?.content || "", e.target.value));
           } catch (e) {
             setContent(null);
             setEditMode(false);
@@ -96,20 +90,18 @@ export default function View() {
                   EDIT_NOTE_URL + id,
                   {
                     title: data?.title,
-                    content: CryptoJS.AES.encrypt(
-                      JSON.stringify(content),
-                      password
-                    ).toString(),
+                    content: encrypt(content, password),
                   },
                   authConfig(user?.token)
                 )
                 .then(({ data }) => {
-                  setIsLoading(false);
                   setData(data);
                 })
                 .catch((e) => {
-                  setIsLoading(false);
                   setIsError(true);
+                })
+                .finally(() => {
+                  setIsLoading(false);
                 });
             }}
           >

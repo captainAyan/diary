@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
-import CryptoJS from "crypto-js";
 
 import { CREATE_NOTE_URL } from "../constants/api";
 import authConfig from "../util/authConfig";
+import { encrypt } from "../util/crypto";
 
 export default function Create() {
   const [formData, setFormData] = useState({
@@ -28,10 +28,7 @@ export default function Create() {
         CREATE_NOTE_URL,
         {
           title,
-          content: CryptoJS.AES.encrypt(
-            JSON.stringify(content),
-            password
-          ).toString(),
+          content: encrypt(content, password),
         },
         authConfig(user?.token)
       );
