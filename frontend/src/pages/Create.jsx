@@ -87,6 +87,7 @@ export default function Create() {
             id="content"
             value={content}
             placeholder="Content"
+            style={{ resize: "vertical" }}
             rows={6}
             onChange={onChange}
           />
