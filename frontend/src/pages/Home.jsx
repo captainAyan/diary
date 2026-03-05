@@ -26,6 +26,11 @@ export default function Home() {
     setData(data);
   }
 
+  function handleDelete(id) {
+    if (!window.confirm("Are you sure you want to delete this note?")) return;
+    deleteNote(id);
+  }
+
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -47,7 +52,7 @@ export default function Home() {
             <li key={note.id}>
               <h2>{note.title}</h2>
               <Link to={`view/${note.id}`}>[View]</Link>
-              <a href="#" onClick={() => deleteNote(note.id)}>
+              <a href="#" onClick={() => handleDelete(note.id)}>
                 [Delete]
               </a>
             </li>
