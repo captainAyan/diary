@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: false }));
 
 const db = process.env.MONGODB_URI;
 mongoose
-  .connect(db, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(db)
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.log(err));
 
@@ -31,15 +31,15 @@ app.use(helmet());
 app.use(cors());
 
 const limiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: process.env.NODE_ENV === "production" ? PER_MINUTE_REQUEST_LIMIT : false,
-  standardHeaders: true,
+  windowMs: 10 * 60 * 1000, // 15 minutes
+  limit: process.env.NODE_ENV === "production" ? PER_MINUTE_REQUEST_LIMIT : Infinity,
+  standardHeaders: "draft-8",
   legacyHeaders: false,
-  handler: (req, res, next) => {
-    throw new ErrorResponse("Too many requests", StatusCodes.TOO_MANY_REQUESTS);
+  handler: (_req, _res, _next) => {
+    throw createHttpError(StatusCodes.TOO_MANY_REQUESTS, "Too many requests");
   },
 });
-app.use(limiter); // limits all paths
+// app.use(limiter); // limits all paths
 
 app.use("/api", require("./routes/api"));
 
@@ -51,7 +51,7 @@ if (process.env.NODE_ENV === "production") {
   // app.use(express.static(path.join(__dirname, "../frontend/dist/")));
   app.use(express.static(distPath));
 
-  app.get("*", (req, res) =>
+  app.get("/{*any}", (req, res) =>
     res.sendFile(
       // path.resolve(__dirname, "../", "frontend", "dist", "index.html")
       path.join(distPath, "index.html")
@@ -61,7 +61,7 @@ if (process.env.NODE_ENV === "production") {
   app.get("/", (req, res) => res.send("Please set to production"));
 }
 
-app.use("*", (req, res, next) => {
+app.use("/{*any}", (req, res, next) => {
   throw new ErrorResponse("Not found", StatusCodes.NOT_FOUND);
 });
 

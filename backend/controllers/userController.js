@@ -1,6 +1,5 @@
 const bcrypt = require("bcryptjs");
 const { StatusCodes } = require("http-status-codes");
-const asyncHandler = require("express-async-handler");
 
 const User = require("../models/userModel");
 const { ErrorResponse } = require("../middleware/errorMiddleware");
@@ -12,7 +11,7 @@ const {
 } = require("../util/userValidationSchema");
 const generateToken = require("../util/tokenGenerator");
 
-const login = asyncHandler(async (req, res, next) => {
+async function login(req, res, next)  {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -32,9 +31,10 @@ const login = asyncHandler(async (req, res, next) => {
   } else {
     throw new ErrorResponse("Invalid credentials", StatusCodes.BAD_REQUEST);
   }
-});
+}
 
-const register = asyncHandler(async (req, res, next) => {
+
+async function register(req, res, next) {
   const { error } = createSchema.validate(req.body);
 
   if (error) {
@@ -71,9 +71,9 @@ const register = asyncHandler(async (req, res, next) => {
     ...response,
     token: generateToken({ id: user.id }),
   });
-});
+}
 
-const getProfile = asyncHandler(async (req, res, next) => {
+async function getProfile(req, res, next) {
   const response = {
     id: req.user.id,
     firstName: req.user.firstName,
@@ -82,9 +82,9 @@ const getProfile = asyncHandler(async (req, res, next) => {
   };
 
   res.status(StatusCodes.OK).json(response);
-});
+}
 
-const editProfile = asyncHandler(async (req, res, next) => {
+async function editProfile(req, res, next) {
   const { error } = editSchema.validate(req.body);
 
   if (error) {
@@ -100,8 +100,7 @@ const editProfile = asyncHandler(async (req, res, next) => {
     throw new ErrorResponse("Email is taken", StatusCodes.BAD_REQUEST);
   }
 
-  user.firstName = firstName;
-  user.lastName = lastName;
+  user.firstName = firstName; user.lastName = lastName;
   user.email = email;
 
   await user.save();
@@ -114,14 +113,14 @@ const editProfile = asyncHandler(async (req, res, next) => {
   };
 
   res.status(StatusCodes.OK).json(response);
-});
+}
 
-const deleteProfile = asyncHandler(async (req, res, next) => {
+async function deleteProfile(req, res, next) {
   await User.deleteOne({ _id: req.user.id });
 
   res.status(StatusCodes.OK).json({
     id: req.user.id,
   });
-});
+}
 
 module.exports = { login, register, getProfile, editProfile, deleteProfile };

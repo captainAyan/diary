@@ -1,12 +1,11 @@
 const { StatusCodes } = require("http-status-codes");
-const asyncHandler = require("express-async-handler");
 
 const Note = require("../models/noteModel");
 const { ErrorResponse } = require("../middleware/errorMiddleware");
 const { createSchema, editSchema } = require("../util/noteValidationSchema");
 const { NOTE_LIMIT, PAGINATION_LIMIT } = require("../constants/policies");
 
-const getNotes = asyncHandler(async (req, res, next) => {
+async function getNotes(req, res, next) {
   const PAGE =
     parseInt(req.query.page, 10) > 0 ? parseInt(req.query.page, 10) : 0;
 
@@ -24,9 +23,9 @@ const getNotes = asyncHandler(async (req, res, next) => {
   };
 
   res.status(StatusCodes.OK).json(response);
-});
+}
 
-const getAllNotes = asyncHandler(async (req, res, next) => {
+async function getAllNotes(req, res, next) {
   const notes = await Note.find({ user_id: req.user.id })
     .sort("-created_at")
     .select("-user_id");
@@ -36,9 +35,9 @@ const getAllNotes = asyncHandler(async (req, res, next) => {
   };
 
   res.status(StatusCodes.OK).json(response);
-});
+}
 
-const getNote = asyncHandler(async (req, res, next) => {
+async function getNote(req, res, next) {
   const { id } = req.params;
 
   let note;
@@ -57,16 +56,16 @@ const getNote = asyncHandler(async (req, res, next) => {
   }
 
   res.status(StatusCodes.OK).json(note);
-});
+}
 
-const createNote = asyncHandler(async (req, res, next) => {
+async function createNote(req, res, next) {
   const { error } = createSchema.validate(req.body);
 
   if (error) {
     throw new ErrorResponse("Invalid input error", StatusCodes.BAD_REQUEST);
   }
 
-  const totalNotes = await Note.find({ user_id: req.user.id }).count();
+  const totalNotes = await Note.countDocuments({ user_id: req.user.id });
 
   if (totalNotes === NOTE_LIMIT) {
     throw new ErrorResponse("Note limit reached", StatusCodes.FORBIDDEN);
@@ -80,9 +79,9 @@ const createNote = asyncHandler(async (req, res, next) => {
   const note = await Note.findById(n.id).select("-user_id");
 
   res.status(StatusCodes.CREATED).json(note);
-});
+}
 
-const editNote = asyncHandler(async (req, res, next) => {
+async function editNote(req, res, next) {
   const { error } = editSchema.validate(req.body);
 
   if (error) {
@@ -114,9 +113,9 @@ const editNote = asyncHandler(async (req, res, next) => {
   note.save();
 
   res.status(StatusCodes.OK).json(note);
-});
+}
 
-const deleteNote = asyncHandler(async (req, res, next) => {
+async function deleteNote(req, res, next) {
   const { id } = req.params;
 
   try {
@@ -130,7 +129,7 @@ const deleteNote = asyncHandler(async (req, res, next) => {
   res.status(StatusCodes.OK).json({
     id: req.user.id,
   });
-});
+}
 
 module.exports = {
   getNote,
